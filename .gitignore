@@ -1,0 +1,53 @@
+# --- IDE / системные файлы ---------------------------------
+*.autosave
+*.user
+*.pro.user*
+*.log
+*.bak
+*.swp
+*.tmp
+*.directory
+.DS_Store
+Thumbs.db
+
+# --- каталоги сборки (Qt Creator, CMake, MSBuild) ----------
+/build*/
+*/build*/
+cmake-build-*/
+debug*/
+release*/
+
+# --- CMake artefacts ---------------------------------------
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# --- объектные и бинарные файлы ----------------------------
+*.o
+*.obj
+*.so
+*.a
+*.dll
+*.lib
+*.exe
+*.pdb
+*.ilk
+*.ipch
+
+# --- Qt generated MOC / UI / RCC ---------------------------
+moc_*
+ui_*
+qrc_*.cpp        # сгенерированные .cpp от ресурсов
+
+# --- VS Code / CLion / clangd ------------------------------
+.vscode/
+.idea/
+.clangd/
+.cache/
+
+# --- архивы и прочий мусор ---------------------------------
+*.zip
+*.tar.gz
+*.7z

@@ -30,6 +30,8 @@ using Condition = std::variant<std::monostate, ConditionCIDR, ConditionRange>;
 class Rule {
 public:
     void AddCondition(Condition&& cnd);
+
+    // check if IP matches to any condition -> return true 
     bool Matches(uint32_t ip) const;
 
 private:
@@ -38,7 +40,6 @@ private:
 
 struct LogRecord {
     uint32_t ip;
-    std::optional<uint32_t> mask;
     std::string comment;
 };
 

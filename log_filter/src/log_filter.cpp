@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstdint>
+#include <charconv>
 #include <bit>
 
 namespace log_filter {
@@ -32,6 +33,7 @@ uint32_t PrefixToMask(uint32_t prefix) {
         return 0;
     }
 
+    // if prefix has more 32 symbols, it's invalid case
     if (prefix >= 32) {
         return 0xFFFFFFFFu;
     }
@@ -39,15 +41,11 @@ uint32_t PrefixToMask(uint32_t prefix) {
     return 0xFFFFFFFFu << (32 - prefix);
 }
 
-std::string IpV4ToString(uint32_t ip, std::optional<uint32_t> mask) {
+std::string IpV4ToString(uint32_t ip) {
     std::string res = std::to_string((ip >> 24) & 0xFF) + "." 
                     + std::to_string((ip >> 16) & 0xFF) + "."
                     + std::to_string((ip >> 8) & 0xFF) + "."
                     + std::to_string(ip & 0xFF);
-
-    if (mask.has_value()) {
-        res += "/" + std::to_string(std::popcount(mask.value()));
-    }
 
     return res;
 }
@@ -62,11 +60,18 @@ std::pair<uint32_t, std::optional<uint32_t>> ParseIpV4(std::string_view str) {
         if (buf.empty()) {
             throw std::invalid_argument("incorrect IP");
         }
-        parts.push_back(static_cast<uint32_t>(std::stoi(buf)));
-        buf.clear();
-        if (parts.back() > 255) {
+
+        uint32_t value = 0;
+        const char* begin = buf.data();
+        const char* end = buf.data() + buf.size();
+
+        auto [ptr, ec] = std::from_chars(begin, end, value);
+        if (ec != std::errc{} || ptr != end || value > 255) {
             throw std::invalid_argument("incorrect IP");
         }
+
+        parts.push_back(value);
+        buf.clear();
     };
 
     for (auto ch : str) {
@@ -212,10 +217,14 @@ void Rule::AddCondition(Condition&& cnd) {
     conditions_.push_back(std::move(cnd));
 }
 
+// check if IP matches to any condition -> return true 
 bool Rule::Matches(uint32_t ip) const {
-    for (auto& c : conditions_) {
-        bool result = true;
+    if (conditions_.empty()) {
+        return true;
+    }
 
+    bool result = false;
+    for (auto& c : conditions_) {
         if (std::holds_alternative<ConditionCIDR>(c)) {
             result = std::get<ConditionCIDR>(c).Matches(ip);
         }
@@ -223,12 +232,12 @@ bool Rule::Matches(uint32_t ip) const {
             result = std::get<ConditionRange>(c).Matches(ip);
         }
 
-        if (result == false) {
-            return false;
+        if (result == true) {
+            return true;
         }
     }
 
-    return true;
+    return result;
 }
 
 } // namespace log_filter::detail
@@ -258,7 +267,7 @@ void Filter::StartProcessing(std::istream& input, std::ostream& output) {
         try {
             log = ParseAndCheckLine(line);            
         }
-        catch (const std::invalid_argument&) {
+        catch (const std::exception&) {
             line.clear();
             continue;
         }
@@ -282,39 +291,31 @@ void Filter::StartProcessing(std::istream& input, std::ostream& output) {
 
 std::optional<LogRecord> Filter::ParseAndCheckLine(std::string_view line) {
     // parse line
-    bool is_comment = false;
-    std::string ip;
-    std::string comment;
-    for (auto ch : line) {
-        if (ch == '#') {
-            break;
-        }
+    size_t pos = line.find(" - ");
 
-        if (is_comment == true) {
-            comment.push_back(ch);
-            continue;
-        }
+    std::string ip_part;
+    std::string comment_part;
 
-        if (ch == '-' && is_comment == false) {
-            is_comment = true;
-            continue;
-        }        
-
-        ip.push_back(ch);
+    if (pos == std::string::npos) {
+        ip_part = RemoveExtremeSpaces(line);
+        comment_part = {};
+    }
+    else {
+        ip_part = RemoveExtremeSpaces(line.substr(0, pos));
+        comment_part = RemoveExtremeSpaces(line.substr(pos + 3));
     }
 
-    ip = RemoveExtremeSpaces(ip);
-    comment = RemoveExtremeSpaces(comment);
-
     // parse ip to num
-    auto [ip_num, mask] = ParseIpV4(ip);
+    auto [ip_num, mask] = ParseIpV4(ip_part);
+    if (mask.has_value()) {
+        throw std::invalid_argument("mask is not allowed in log line");
+    }
     
     // check ip for conditions and return
     if (rule_.Matches(ip_num)) {
         return LogRecord{
                             .ip = ip_num,
-                            .mask = mask,
-                            .comment = comment
+                            .comment = comment_part
                         };
     }
 
@@ -323,7 +324,7 @@ std::optional<LogRecord> Filter::ParseAndCheckLine(std::string_view line) {
 
 void Filter::BufferToOutput(std::ostream& output) {
     for (auto& log : buffer_) {
-        std::string line = IpV4ToString(log.ip, log.mask);
+        std::string line = IpV4ToString(log.ip);
         output << line;
         if (!log.comment.empty()) {
             output << " - " << log.comment;

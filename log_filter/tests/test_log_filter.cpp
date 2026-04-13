@@ -74,18 +74,18 @@ SCENARIO("Check filter type: range") {
         }
     }
 
-    GIVEN("a filter with two range rules combained with AND") {
+    GIVEN("a filter with two range rules combained with OR") {
         auto filter = create_filter({        
-            {"type", "range", "value", "10.0.0.0-100.0.0.0"},
+            {"type", "range", "value", "50.0.0.0-100.0.0.0"},
             {"type", "range", "value", "10.0.0.1-10.0.0.255"}
         });        
 
-        WHEN("IP belongs to both ranges") {
-            REQUIRE(RunFilter(filter, "10.0.0.100") == "10.0.0.100\n");
+        WHEN("IP belongs only to the first range") {
+            REQUIRE(RunFilter(filter, "70.0.0.100") == "70.0.0.100\n");
         }
 
-        WHEN("IP belongs only to the wider range") {
-            REQUIRE(RunFilter(filter, "50.0.0.1").empty());
+        WHEN("IP belongs only to the second range") {
+            REQUIRE(RunFilter(filter, "10.0.0.13") == "10.0.0.13\n");
         }
 
         WHEN("IP belongs to neither range") {
@@ -115,18 +115,18 @@ SCENARIO("Check filter type: subnet") {
         }
     }
 
-    GIVEN("a filter with two subnet rules combined with AND") {
+    GIVEN("a filter with two subnet rules combined with OR") {
         auto filter = create_filter({
-            {"type", "subnet", "value", "10.0.0.0/16"},
+            {"type", "subnet", "value", "20.0.0.0/16"},
             {"type", "subnet", "value", "10.0.0.0/24"}
         });
 
-        WHEN("IP belongs to both subnets") {
-            REQUIRE(RunFilter(filter, "10.0.0.42") == "10.0.0.42\n");
+        WHEN("IP belongs to the first subnets") {
+            REQUIRE(RunFilter(filter, "20.0.55.42") == "20.0.55.42\n");
         }
 
-        WHEN("IP belongs only to the one subnet") {
-            REQUIRE(RunFilter(filter, "10.0.1.42").empty());
+        WHEN("IP belongs to the second subnet") {
+            REQUIRE(RunFilter(filter, "10.0.0.64") == "10.0.0.64\n");
         }
 
         WHEN("IP belongs to neither subnet") {
@@ -138,18 +138,18 @@ SCENARIO("Check filter type: subnet") {
 SCENARIO("Check filter with mixed conditions: range and subnet") {
     using namespace log_filter;
 
-    GIVEN("a filter with range and subnet rules combined with AND") {
+    GIVEN("a filter with range and subnet rules combined with OR") {
         auto filter = create_filter({
             {"type", "range", "value", "10.0.0.1-10.0.1.255"},
-            {"type", "subnet", "value", "10.0.0.0/24"}
+            {"type", "subnet", "value", "192.168.0.0/24"}
         });
 
-        WHEN("IP belongs to both conditions") {
+        WHEN("IP belongs to the range condition") {
             REQUIRE(RunFilter(filter, "10.0.0.42") == "10.0.0.42\n");
         }
 
-        WHEN("IP belongs only to the range") {
-            REQUIRE(RunFilter(filter, "10.0.1.42").empty());
+        WHEN("IP belongs to the subnet condition") {
+            REQUIRE(RunFilter(filter, "192.168.0.12") == "192.168.0.12\n");
         }
 
         WHEN("IP belongs to neither condition") {
@@ -218,6 +218,22 @@ SCENARIO("Check filter with boundary conditions") {
 
         WHEN("IP is 255.255.255.255") {
             REQUIRE(RunFilter(filter, "255.255.255.255") == "255.255.255.255\n");
+        }
+    }
+
+    GIVEN("a empty filter") {
+        auto filter = create_filter({});
+
+        WHEN("octet is too large for integer parsing") {
+            REQUIRE(RunFilter(filter, "123456789012345678901.1.1.1").empty());
+        }
+
+        WHEN("log contains CIDR instead of plain IPv4") {
+            REQUIRE(RunFilter(filter, "10.0.0.42/24 - msg").empty());
+        }
+
+        WHEN("line uses hyphen without log separator") {
+            REQUIRE(RunFilter(filter, "10.0.0.1-10.0.0.2").empty());
         }
     }
 }

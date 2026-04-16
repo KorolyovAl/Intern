@@ -5,17 +5,22 @@ namespace my_ptr {
 
 template<typename T>
 class SharedPtr {
+private:    
+    SharedPtr(T* ptr, detail::ControlBlockBase* cb) {
+        copy_ptr(ptr, cb);
+    }
 public:
-    SharedPtr(T* ptr = nullptr) {
+    SharedPtr() = default;
+
+    template<typename U>
+    SharedPtr(U* ptr = nullptr) {
         if (ptr == nullptr) {
             return;
         }
 
         try {            
-            cb_ = new detail::ControlBlock{};
+            cb_ = new detail::ControlBlock<U>(ptr);
             data_ = ptr;
-            cb_->shared_count = 1;
-            cb_->weak_count = 0;
         }
         catch (...) {
             delete ptr;
@@ -25,11 +30,7 @@ public:
 
     SharedPtr(const SharedPtr& other) {
         copy_ptr(other.data_, other.cb_);
-    }
-
-    SharedPtr(T* ptr, detail::ControlBlock* cb) {
-        copy_ptr(ptr, cb);
-    }
+    }    
 
     SharedPtr(SharedPtr&& other) noexcept {
         data_ = other.data_;
@@ -82,18 +83,17 @@ public:
         return data_ != nullptr;
     }
 
-    void reset(T* ptr = nullptr) {
+    template<typename U>
+    void reset(U* ptr = nullptr) {
         if (ptr == data_) {
             return;
         }
 
-        detail::ControlBlock* new_cb = nullptr;
+        detail::ControlBlockBase* new_cb = nullptr;
 
         if (ptr != nullptr) {
             try {
-                new_cb = new detail::ControlBlock{};
-                new_cb->shared_count = 1;
-                new_cb->weak_count = 0;
+                new_cb = new detail::ControlBlock<U>(ptr);
             } catch (...) {
                 delete ptr;
                 throw;
@@ -115,7 +115,7 @@ public:
     }
 
 private:
-    void copy_ptr(T* ptr, detail::ControlBlock* cb) {
+    void copy_ptr(T* ptr, detail::ControlBlockBase* cb) {
         data_ = ptr;
         cb_ = cb;
 
@@ -132,9 +132,9 @@ private:
         --cb_->shared_count;
 
         if (cb_->shared_count == 0) {
-            delete data_;
+            cb_->DestroyObject();
 
-            if (cb_->weak_count == 0) {
+            if (cb_->shared_count == 0 && cb_->weak_count == 0) {
                 delete cb_;
             }
         }
@@ -145,7 +145,7 @@ private:
 
 private:
     T* data_ = nullptr;
-    detail::ControlBlock* cb_ = nullptr;
+    detail::ControlBlockBase* cb_ = nullptr;
 
     template <typename>
     friend class WeakPtr;

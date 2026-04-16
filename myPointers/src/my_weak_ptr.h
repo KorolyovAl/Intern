@@ -79,7 +79,7 @@ public:
     }
 
 private:
-    void copy_ptr(T* ptr, detail::ControlBlock* cb) {
+    void copy_ptr(T* ptr, detail::ControlBlockBase* cb) {
         data_ = ptr;
         cb_ = cb;
 
@@ -104,7 +104,7 @@ private:
 
 private:
     T* data_ = nullptr;
-    detail::ControlBlock* cb_ = nullptr;
+    detail::ControlBlockBase* cb_ = nullptr;
 };
 
 } // namespace my_ptr

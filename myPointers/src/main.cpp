@@ -45,6 +45,42 @@ struct Node {
 
 int Node::destroyed = 0;
 
+struct Base {
+    static int base_destroyed;
+
+    ~Base() {
+        ++base_destroyed;
+    }
+};
+
+int Base::base_destroyed = 0;
+
+struct Derived : Base {
+    static int derived_destroyed;
+
+    ~Derived() {
+        ++derived_destroyed;
+    }
+};
+
+int Derived::derived_destroyed = 0;
+
+void ResetPolymorphicCounters() {
+    Base::base_destroyed = 0;
+    Derived::derived_destroyed = 0;
+}
+
+void TestPolymorphicDeletion() {
+    ResetPolymorphicCounters();
+
+    {
+        SharedPtr<Base> ptr(new Derived());
+    }
+
+    assert(Base::base_destroyed == 1);
+    assert(Derived::derived_destroyed == 1);
+}
+
 // проверяется, что объект уничтожится только 1 раз
 void TestMemoryManagement() {
     ResetLifetimeCounters();
@@ -183,12 +219,36 @@ void TestMoveOwnershipTransfer() {
     assert(LifetimeTracker::destroyed == 1);
 }
 
+void TestWeakPtrMove() {
+    ResetLifetimeCounters();
+
+    {
+        SharedPtr<LifetimeTracker> shared(new LifetimeTracker(10));
+        WeakPtr<LifetimeTracker> weak(shared);
+
+        WeakPtr<LifetimeTracker> moved(std::move(weak));
+
+        assert(weak.use_count() == 0);
+        assert(moved.use_count() == 1);
+        assert(!moved.expired());
+
+        SharedPtr<LifetimeTracker> locked = moved.lock();
+        assert(locked);
+        assert(locked->value == 10);
+    }
+
+    assert(LifetimeTracker::alive == 0);
+    assert(LifetimeTracker::destroyed == 1);
+}
+
 int main() {
+    TestPolymorphicDeletion();
     TestMemoryManagement();
     TestBasicFunctionality();
     TestCyclesBrokenWithWeakPtr();
     TestSelfAssignment();
     TestMoveOwnershipTransfer();
+    TestWeakPtrMove();
 
     std::cout << "All tests passed\n";
     return 0;

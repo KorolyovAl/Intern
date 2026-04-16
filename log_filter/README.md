@@ -62,15 +62,30 @@ process_stream(input, output, filter);
 
 - CMake 3.22+
 - C++20-компилятор
-- Conan 2.x
 
-### Зависимости
-
-Для тестов используется Catch2.
+Для запуска тестов дополнительно требуется Conan 2.x для установки Catch2.
 
 ### Сборка проекта
 
 ```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF
+cmake --build build
+```
+
+Если требуется собрать проект вместе с тестами, предварительно нужно установить зависимости для тестового окружения.
+
+## Тесты
+
+### Установка Conan
+
+```bash
+python3 -m pip install conan
+```
+
+### Подготовка зависимостей и сборка с тестами
+
+```bash
+conan profile detect --force
 conan install . --output-folder=build --build=missing -s build_type=Debug
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
 cmake --build build

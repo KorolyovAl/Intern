@@ -68,7 +68,7 @@ process_stream(input, output, filter);
 ### Сборка проекта
 
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF
+cmake -S . -B build
 cmake --build build
 ```
 
@@ -85,9 +85,11 @@ python3 -m pip install conan
 ### Подготовка зависимостей и сборка с тестами
 
 ```bash
-conan profile detect --force
 conan install . --output-folder=build --build=missing -s build_type=Debug
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
+cmake -S . -B build \
+    -DLOG_FILTER_BUILD_TESTS=ON \
+    -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake \
+    -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ```
 

@@ -1,66 +1,21 @@
 #pragma once
 
-#include <stdint.h>
-#include <string>
 #include <iostream>
 #include <vector>
-#include <variant>
-#include <optional>
+#include <memory>
 
 namespace log_filter {
-
-namespace detail {
-
-struct ConditionCIDR {
-    uint32_t ip_cidr;
-    uint32_t mask_cidr;
-
-    bool Matches(uint32_t ip) const;
-};
-
-struct ConditionRange {
-    uint32_t start_range;
-    uint32_t end_range;
-
-    bool Matches(uint32_t ip) const;
-};
-
-using Condition = std::variant<std::monostate, ConditionCIDR, ConditionRange>;
-
-class Rule {
-public:
-    void AddCondition(Condition&& cnd);
-
-    // check if IP matches to any condition -> return true 
-    bool Matches(uint32_t ip) const;
-
-private:
-    std::vector<Condition> conditions_;
-};
-
-struct LogRecord {
-    uint32_t ip;
-    std::string comment;
-};
-
-} // namespace detail
 
 class Filter {
 public:
     Filter(const std::vector<std::vector<std::string>>& conditions);
+    ~Filter();
 
     void StartProcessing(std::istream& input, std::ostream& output);
 
 private:
-    std::optional<detail::LogRecord> ParseAndCheckLine(std::string_view line);
-    void BufferToOutput(std::ostream& output);
-
-private:
-    detail::Rule rule_;
-    std::vector<detail::LogRecord> buffer_;
-
-    const size_t max_buffer_size_ = 1'000;
-    const size_t max_conditions_size_ = 20;
+    class FilterImpl;
+    std::unique_ptr<FilterImpl> impl_;
 };
 
 } // namespace log_filter

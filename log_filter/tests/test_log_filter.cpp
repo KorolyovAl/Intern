@@ -66,11 +66,11 @@ SCENARIO("Check filter type: range") {
         });        
 
         WHEN("IP is inside the range") {
-            REQUIRE(RunFilter(filter, "10.0.0.42") == "10.0.0.42\n");
+            REQUIRE(RunFilter(filter, "10.0.0.42 - MSG") == "10.0.0.42 - MSG\n");
         }
 
         WHEN("IP is outside the range") {
-            REQUIRE(RunFilter(filter, "10.0.1.1").empty());
+            REQUIRE(RunFilter(filter, "10.0.1.1 - MSG").empty());
         }
     }
 
@@ -81,15 +81,15 @@ SCENARIO("Check filter type: range") {
         });        
 
         WHEN("IP belongs only to the first range") {
-            REQUIRE(RunFilter(filter, "70.0.0.100") == "70.0.0.100\n");
+            REQUIRE(RunFilter(filter, "70.0.0.100 - MSG") == "70.0.0.100 - MSG\n");
         }
 
         WHEN("IP belongs only to the second range") {
-            REQUIRE(RunFilter(filter, "10.0.0.13") == "10.0.0.13\n");
+            REQUIRE(RunFilter(filter, "10.0.0.13 - MSG") == "10.0.0.13 - MSG\n");
         }
 
         WHEN("IP belongs to neither range") {
-            REQUIRE(RunFilter(filter, "200.0.0.1").empty());
+            REQUIRE(RunFilter(filter, "200.0.0.1 - MSG").empty());
         }
     }
 }
@@ -103,15 +103,15 @@ SCENARIO("Check filter type: subnet") {
         });
 
         WHEN("IP is inside the subnet") {
-            REQUIRE(RunFilter(filter, "10.0.0.42") == "10.0.0.42\n");
+            REQUIRE(RunFilter(filter, "10.0.0.42 - MSG") == "10.0.0.42 - MSG\n");
         }
 
         WHEN("IP is the subnet boundary adress") {
-            REQUIRE(RunFilter(filter, "10.0.0.0") == "10.0.0.0\n");
+            REQUIRE(RunFilter(filter, "10.0.0.0 - MSG") == "10.0.0.0 - MSG\n");
         }
 
         WHEN("IP is outside the subnet") {
-            REQUIRE(RunFilter(filter, "10.0.1.42").empty());
+            REQUIRE(RunFilter(filter, "10.0.1.42 - MSG").empty());
         }
     }
 
@@ -122,15 +122,15 @@ SCENARIO("Check filter type: subnet") {
         });
 
         WHEN("IP belongs to the first subnets") {
-            REQUIRE(RunFilter(filter, "20.0.55.42") == "20.0.55.42\n");
+            REQUIRE(RunFilter(filter, "20.0.55.42 - MSG") == "20.0.55.42 - MSG\n");
         }
 
         WHEN("IP belongs to the second subnet") {
-            REQUIRE(RunFilter(filter, "10.0.0.64") == "10.0.0.64\n");
+            REQUIRE(RunFilter(filter, "10.0.0.64 - MSG") == "10.0.0.64 - MSG\n");
         }
 
         WHEN("IP belongs to neither subnet") {
-            REQUIRE(RunFilter(filter, "11.0.1.42").empty());
+            REQUIRE(RunFilter(filter, "11.0.1.42 - MSG").empty());
         }
     }
 }
@@ -145,15 +145,15 @@ SCENARIO("Check filter with mixed conditions: range and subnet") {
         });
 
         WHEN("IP belongs to the range condition") {
-            REQUIRE(RunFilter(filter, "10.0.0.42") == "10.0.0.42\n");
+            REQUIRE(RunFilter(filter, "10.0.0.42 - MSG") == "10.0.0.42 - MSG\n");
         }
 
         WHEN("IP belongs to the subnet condition") {
-            REQUIRE(RunFilter(filter, "192.168.0.12") == "192.168.0.12\n");
+            REQUIRE(RunFilter(filter, "192.168.0.12 - MSG") == "192.168.0.12 - MSG\n");
         }
 
         WHEN("IP belongs to neither condition") {
-            REQUIRE(RunFilter(filter, "11.0.0.42").empty());
+            REQUIRE(RunFilter(filter, "11.0.0.42 - MSG").empty());
         }
     }
 }
@@ -167,19 +167,19 @@ SCENARIO("Check filter with boundary conditions") {
         });
 
         WHEN("IP is equal to the lower boundary") {
-            REQUIRE(RunFilter(filter, "10.0.0.1") == "10.0.0.1\n");
+            REQUIRE(RunFilter(filter, "10.0.0.1 - MSG") == "10.0.0.1 - MSG\n");
         }
 
         WHEN("IP is equal to the upper boundary") {
-            REQUIRE(RunFilter(filter, "10.0.0.255") == "10.0.0.255\n");
+            REQUIRE(RunFilter(filter, "10.0.0.255 - MSG") == "10.0.0.255 - MSG\n");
         }
 
         WHEN("IP is just below the lower boundary") {
-            REQUIRE(RunFilter(filter, "10.0.0.0").empty());
+            REQUIRE(RunFilter(filter, "10.0.0.0 - MSG").empty());
         }
 
         WHEN("IP is just above the upper boundary") {
-            REQUIRE(RunFilter(filter, "10.0.1.0").empty());
+            REQUIRE(RunFilter(filter, "10.0.1.0 - MSG").empty());
         }
     }
 
@@ -189,11 +189,11 @@ SCENARIO("Check filter with boundary conditions") {
         });
 
         WHEN("IP matches exactly") {
-            REQUIRE(RunFilter(filter, "10.0.0.42") == "10.0.0.42\n");
+            REQUIRE(RunFilter(filter, "10.0.0.42 - MSG") == "10.0.0.42 - MSG\n");
         }
 
         WHEN("IP differs by one") {
-            REQUIRE(RunFilter(filter, "10.0.0.43").empty());
+            REQUIRE(RunFilter(filter, "10.0.0.43 - MSG").empty());
         }
     }
 
@@ -203,7 +203,7 @@ SCENARIO("Check filter with boundary conditions") {
         });
 
         WHEN("any IPv4 address is passed") {
-            REQUIRE(RunFilter(filter, "192.168.1.10") == "192.168.1.10\n");
+            REQUIRE(RunFilter(filter, "192.168.1.10 - MSG") == "192.168.1.10 - MSG\n");
         }
     }
 
@@ -213,11 +213,11 @@ SCENARIO("Check filter with boundary conditions") {
         });
 
         WHEN("IP is 0.0.0.0") {
-            REQUIRE(RunFilter(filter, "0.0.0.0") == "0.0.0.0\n");
+            REQUIRE(RunFilter(filter, "0.0.0.0 - MSG") == "0.0.0.0 - MSG\n");
         }
 
         WHEN("IP is 255.255.255.255") {
-            REQUIRE(RunFilter(filter, "255.255.255.255") == "255.255.255.255\n");
+            REQUIRE(RunFilter(filter, "255.255.255.255 - MSG") == "255.255.255.255 - MSG\n");
         }
     }
 
@@ -225,7 +225,7 @@ SCENARIO("Check filter with boundary conditions") {
         auto filter = create_filter({});
 
         WHEN("octet is too large for integer parsing") {
-            REQUIRE(RunFilter(filter, "123456789012345678901.1.1.1").empty());
+            REQUIRE(RunFilter(filter, "123456789012345678901.1.1.1 - MSG").empty());
         }
 
         WHEN("log contains CIDR instead of plain IPv4") {
@@ -233,7 +233,7 @@ SCENARIO("Check filter with boundary conditions") {
         }
 
         WHEN("line uses hyphen without log separator") {
-            REQUIRE(RunFilter(filter, "10.0.0.1-10.0.0.2").empty());
+            REQUIRE(RunFilter(filter, "10.0.0.1-10.0.0.2 - MSG").empty());
         }
     }
 }
@@ -245,9 +245,9 @@ SCENARIO("Check filter with incorrect logs") {
         auto filter = create_filter({});
 
         WHEN("IP is incorrect") {
-            REQUIRE(RunFilter(filter, "1232143").empty());
-            REQUIRE(RunFilter(filter, "asdew").empty());
-            REQUIRE(RunFilter(filter, "111.111.111.a").empty());
+            REQUIRE(RunFilter(filter, "1232143 - MSG").empty());
+            REQUIRE(RunFilter(filter, "asdew - MSG").empty());
+            REQUIRE(RunFilter(filter, "111.111.111.a - MSG").empty());
         }
     }
 }
@@ -259,7 +259,7 @@ SCENARIO("Check filter without conditions") {
         auto filter = create_filter({});
 
         WHEN("IP is valid") {
-            REQUIRE(RunFilter(filter, "10.0.0.42") == "10.0.0.42\n");
+            REQUIRE(RunFilter(filter, "10.0.0.42 - MSG") == "10.0.0.42 - MSG\n");
         }
     }
 }

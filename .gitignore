@@ -51,3 +51,4 @@ qrc_*.cpp        # сгенерированные .cpp от ресурсов
 *.zip
 *.tar.gz
 *.7z
+*/CMakeUserPresets.json

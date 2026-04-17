@@ -1,11 +1,13 @@
 #pragma once
+
 #include <cstddef>
+#include <atomic>
 
 namespace detail {
 
 struct ControlBlockBase {
-    size_t shared_count = 1;
-    size_t weak_count = 0;
+    std::atomic<size_t> shared_count = 1;
+    std::atomic<size_t> weak_count = 0;
 
     virtual void DestroyObject() noexcept = 0;
     virtual ~ControlBlockBase() = default;

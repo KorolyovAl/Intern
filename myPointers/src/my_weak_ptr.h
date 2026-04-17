@@ -6,17 +6,17 @@ namespace my_ptr {
 template<typename T>
 class WeakPtr {
 public:
-    WeakPtr() {}
+    WeakPtr() noexcept {}
 
-    WeakPtr(const SharedPtr<T>& shared) {
+    WeakPtr(const SharedPtr<T>& shared) noexcept {
         copy_ptr(shared.data_, shared.cb_);
     }
 
-    WeakPtr(const WeakPtr& other) {
+    WeakPtr(const WeakPtr& other) noexcept {
         copy_ptr(other.data_, other.cb_);
     }
 
-    WeakPtr(WeakPtr&& other) {
+    WeakPtr(WeakPtr&& other) noexcept {
         data_ = other.data_;
         cb_ = other.cb_;
 
@@ -24,18 +24,18 @@ public:
         other.cb_ = nullptr;
     }
     
-    ~WeakPtr() {
+    ~WeakPtr() noexcept {
         release_current();
     }
 
-    WeakPtr& operator=(const SharedPtr<T>& shared) {
+    WeakPtr& operator=(const SharedPtr<T>& shared) noexcept {
         release_current();
         copy_ptr(shared.data_, shared.cb_);
 
         return *this;
     }
 
-    WeakPtr& operator=(const WeakPtr& other) {
+    WeakPtr& operator=(const WeakPtr& other) noexcept {
         if (this == &other) {
             return *this;
         }
@@ -46,7 +46,7 @@ public:
         return *this;
     }
 
-    WeakPtr& operator=(WeakPtr&& other) {
+    WeakPtr& operator=(WeakPtr&& other) noexcept {
         if (this == &other) {
             return *this;
         }
@@ -62,7 +62,7 @@ public:
         return *this;
     }
     
-    SharedPtr<T> lock() const {
+    SharedPtr<T> lock() const noexcept {
         if (cb_ == nullptr || cb_->shared_count == 0) {
             return SharedPtr<T>{};
         }
@@ -70,12 +70,12 @@ public:
         return SharedPtr<T>{data_, cb_};
     }
 
-    bool expired() const {
+    bool expired() const noexcept {
         return use_count() == 0 ? true : false;
     }
 
     size_t use_count() const {
-        return cb_ ? cb_->shared_count : 0;
+        return cb_ ? cb_->shared_count.load() : 0;
     }
 
 private:

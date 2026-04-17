@@ -111,7 +111,7 @@ public:
     }
 
     size_t use_count() const {
-        return cb_ ? cb_->shared_count : 0;
+        return cb_ ? cb_->shared_count.load() : 0;
     }
 
 private:

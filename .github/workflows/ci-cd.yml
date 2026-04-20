@@ -1,0 +1,66 @@
+name: CI Pipeline
+
+# Run workflows for log_filter project
+on: 
+  push:
+    paths:
+      - 'log_filter/**'
+      - '.github/workflows/**'
+
+  pull_request:
+    paths:
+      - 'log_filter/**'
+      - '.github/workflows/**'
+
+jobs:
+  build-and-test:
+    name: Build and Test (${{ matrix.build_type }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    # all run-comands starts from log_filter directory
+    defaults:
+      run:
+        working-directory: log_filter
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up python for install conan2
+      - name: Set up python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # Install system packages for C++
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake
+
+      - name: Install Conan2
+        run: python -m pip install conan
+
+      - name: Detect Conan profile
+        run: conan profile detect --force
+
+      - name: Install dependencies with Conan
+        run: | 
+              conan install . \
+              --output-folder=build/${{ matrix.build_type }} \
+              --build=missing \
+              -s build_type=${{ matrix.build_type }}
+
+      - name: Configure CMake
+        run: |
+              cmake -S . -B build/${{ matrix.build_type }} \
+              -DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.build_type }}/conan_toolchain.cmake \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build
+        run: cmake --build build/${{ matrix.build_type }} -j 2
+
+      - name: Run tests
+        run: ctest --test-dir build/${{ matrix.build_type }} --output-on-failure     

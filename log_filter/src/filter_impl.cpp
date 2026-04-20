@@ -313,10 +313,11 @@ std::optional<LogRecord> Filter::FilterImpl::ParseAndCheckLine(std::string_view 
     
     // check ip for conditions and return
     if (rule_.Matches(ip_num)) {
-        return LogRecord{
+        return std::nullopt;
+        /*return LogRecord{
                             .ip = ip_num,
                             .comment = comment_part
-                        };
+                        };*/
     }
 
     return std::nullopt;

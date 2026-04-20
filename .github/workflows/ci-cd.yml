@@ -57,7 +57,8 @@ jobs:
         run: |
               cmake -S . -B build/${{ matrix.build_type }} \
               -DCMAKE_TOOLCHAIN_FILE=build/${{ matrix.build_type }}/conan_toolchain.cmake \
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DLOG_FILTER_BUILD_TESTS=ON
 
       - name: Build
         run: cmake --build build/${{ matrix.build_type }} -j 2

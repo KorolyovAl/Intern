@@ -12,8 +12,9 @@ Thumbs.db
 
 # --- каталоги сборки (Qt Creator, CMake, MSBuild) ----------
 /build*/
-*/build*/
-cmake-build-*/
+**/build/
+**/build*/
+**/cmake-build-*/
 debug*/
 release*/
 

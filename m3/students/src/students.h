@@ -12,9 +12,9 @@ public:
     };
 
     void ReadFromFile(std::istream& input);
-    void PrintStudents(std::ostream& out);
-    void PrintMaximumRatingStudent(std::ostream& out);
-    double CalculateAverageRating();    
+    void PrintStudents(std::ostream& out) const ;
+    void PrintMaximumRatingStudent(std::ostream& out) const;
+    double CalculateAverageRating() const;
 
 private:
     std::map<std::string, int> data_; // name - rating

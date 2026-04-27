@@ -69,13 +69,13 @@ void Students::ReadFromFile(std::istream& input) {
     }
 }
 
-void Students::PrintStudents(std::ostream& out) {
+void Students::PrintStudents(std::ostream& out) const {
     for (const auto& s : data_) {
         out << s.first << " - " << s.second << '\n';
     }
 }
 
-void Students::PrintMaximumRatingStudent(std::ostream& out) {
+void Students::PrintMaximumRatingStudent(std::ostream& out) const {
     if (data_.empty()) {
         return;
     }
@@ -89,13 +89,13 @@ void Students::PrintMaximumRatingStudent(std::ostream& out) {
     out << max_it->first << " - " << max_it->second << '\n';
 }
 
-double Students::CalculateAverageRating() {
+double Students::CalculateAverageRating() const {
     if (data_.empty()) {
         return 0.;
     }
     
-    int sum = std::accumulate(data_.begin(), data_.end(), 0,
-        [](int acc, const auto& item) {
+    std::int64_t sum = std::accumulate(data_.begin(), data_.end(), std::int64_t{0},
+        [](std::int64_t acc, const auto& item) {
             return acc + item.second;
         }
     );

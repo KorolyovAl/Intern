@@ -5,6 +5,8 @@
 #include <numeric>
 #include <random>
 #include <vector>
+#include <unordered_set>
+#include <iterator>
 
 class NumberArray {
 public:
@@ -36,16 +38,21 @@ public:
     }
 
     void RemoveDuplicates() {
-        std::sort(numbers_.begin(), numbers_.end());
+        std::unordered_set<int> seen;
+        std::vector<int> unique;
+        unique.reserve(numbers_.size());
 
-        auto unique_end = std::unique(numbers_.begin(), numbers_.end());
-        numbers_.erase(unique_end, numbers_.end());
+        std::copy_if(numbers_.begin(), numbers_.end(), std::back_inserter(unique), [&seen](int x) {            
+            return seen.insert(x).second;
+        });
+
+        numbers_ = std::move(unique);
     }
 
     std::uint64_t GetSumOfSquares() const {
-        return std::accumulate(numbers_.begin(), numbers_.end(), 0LL,
+        return std::accumulate(numbers_.begin(), numbers_.end(), std::uint64_t{0},
             [](std::uint64_t sum, int value) {
-                return sum + value * value;
+                return sum + static_cast<std::uint64_t>(value * value);
             });
     }
 

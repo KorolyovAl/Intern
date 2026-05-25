@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 #include <random>
+#include <memory>
 
 #include "thread_pool.h"
 
@@ -26,7 +27,7 @@ int main() {
         std::osyncstream(std::cout) 
                     << "thread ID: " << std::this_thread::get_id() << "\n" 
                     << "taskname: second task\n" 
-                    << "arguments: int num" << "\n";
+                    << "arguments: int num" << "\n\n";
 
         return num * num;
     };
@@ -41,28 +42,29 @@ int main() {
                     << " and num is " << num << "\n\n";
     };
 
-    ThreadPool pool{3};
+    std::unique_ptr<ThreadPool> pool;
 
     try {
-        pool.Enqueue(first_task);
+        pool = std::make_unique<ThreadPool>(3);
 
-        auto res = pool.Enqueue(second_task, 10);
-        std::osyncstream(std::cout) << "second task result: " << res.get() << "\n\n";
+        auto f1 = pool->Enqueue(first_task);
+        auto f2 = pool->Enqueue(second_task, 10);
+        auto f3 = pool->Enqueue(third_task, 3.1415, "PI number");
 
-        pool.Enqueue(third_task, 3.1415, "PI number");
+        f1.get();
+        std::osyncstream(std::cout) << "second task result: " << f2.get() << "\n\n";
+        f3.get();
+
+        pool->Shutdown();    
     }
     catch (std::exception& e) {
         std::cerr << "exception: " << e.what();
         return 1;
-    }    
-
-    pool.Shutdown();
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 
     // проверка выброса исключения при добавлении задачи в остановленную очередь
     try {
-        pool.Enqueue(first_task);
+        pool->Enqueue(first_task);
     }
     catch (std::runtime_error& e) {
         std::osyncstream(std::cout) << "exception after closing thread pool\n";

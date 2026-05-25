@@ -68,10 +68,16 @@ public:
 
         workers_.reserve(workers);
 
-        for (size_t i = 0; i < workers; ++i) {
-            workers_.emplace_back([this] {
-                this->WorkerLoop();
-            });
+        try {
+            for (size_t i = 0; i < workers; ++i) {
+                workers_.emplace_back([this] {
+                    this->WorkerLoop();
+                });
+            }
+        }
+        catch (...) {
+            Shutdown();
+            throw;
         }
     }
 
@@ -82,13 +88,7 @@ public:
     ThreadPool& operator=(ThreadPool&& other) = delete;
 
     ~ThreadPool() {
-        Shutdown();      
-
-        for (auto& w : workers_) {
-            if (w.joinable()) {
-                w.join();
-            }
-        }
+        Shutdown();
     }
 
     template <class F, class... Args>
@@ -119,6 +119,12 @@ public:
 
     void Shutdown() {
         tasks_.Close();
+
+        for (auto& w : workers_) {
+            if (w.joinable()) {
+                w.join();
+            }
+        }
     }
 
 private:
